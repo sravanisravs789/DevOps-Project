@@ -1,0 +1,35 @@
+services:
+  order-service: 
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: order-service
+    ports: 
+      - "8080:8080"
+    environment:
+      - DB_HOST=postgres-database
+      - DB_PORT=5432
+      - DB_NAME=orders
+      - DB_USER=orderuser
+      - DB_PASSWORD=secretpass
+    depends_on:
+      postgres-database: 
+        condition: service_healthy
+
+  postgres-database:
+    image: postgres:15-alpine
+    container_name: postgres-database
+    environment:
+      - POSTGRES_USER=orderuser
+      - POSTGRES_PASSWORD=secretpass
+      - POSTGRES_DB=orders
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orderuser -d orders"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-data:
